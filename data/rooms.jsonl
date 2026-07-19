@@ -1,0 +1,6 @@
+{"_id":"r_101","propertyId":"p_001","room_number":"01-01","type":"standard","updatedAt":"2025-01-01T00:00:00Z"}
+{"_id":"r_102","propertyId":"p_001","room_number":"01-02","type":"master","updatedAt":"2025-01-01T00:00:00Z"}
+{"_id":"r_201","propertyId":"p_002","room_number":"02-01","type":"standard","updatedAt":"2025-12-31T00:00:00Z","deletedAt":"2025-12-31 00:00:00"}
+{"_id":"r_202","propertyId":"p_002","room_number":"02-02","type":"master","updatedAt":"2025-03-01T00:00:00Z"}
+{"_id":"r_301","propertyId":"p_003","room_number":"03-01","type":"standard","updatedAt":"2025-06-01T00:00:00Z"}
+{"_id":"r_302","propertyId":"p_003","room_number":"03-02","type":"master","updatedAt":"2025-06-01T00:00:00Z"}

@@ -1,0 +1,7 @@
+[pipeline]
+name = "cove_raw"
+destination = "bigquery"
+dataset_name = "tht_cove_raw"
+
+[destination.bigquery]
+location = "US"

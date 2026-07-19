@@ -1,0 +1,16 @@
+{"_id":"t_001","roomId":"r_101","tenant_id":"u_001","checkInDate":"2025-01-10","checkOutDate":"2025-03-15","status":"active","updatedAt":"2025-01-10T00:00:00Z"}
+{"_id":"t_002","roomId":"r_101","tenant_id":"u_002","checkInDate":"2025-03-15","checkOutDate":"2025-06-30","status":"active","updatedAt":"2025-03-15T00:00:00Z"}
+{"_id":"t_003","roomId":"r_101","tenant_id":"u_003","checkInDate":"2025-07-15","checkOutDate":"2025-12-31","status":"active","updatedAt":"2025-07-15T00:00:00Z"}
+{"_id":"t_004","roomId":"r_102","tenant_id":"u_004","checkInDate":"2025-02-01","checkOutDate":"2025-05-01","status":"active","updatedAt":"2025-02-01T00:00:00Z"}
+{"_id":"t_005","roomId":"r_102","tenant_id":"u_005","checkInDate":"2025-05-01","checkOutDate":"2025-09-30","status":"active","updatedAt":"2025-05-01T00:00:00Z"}
+{"_id":"t_006","roomId":"r_102","tenant_id":"u_006","checkInDate":"2025-10-10","checkOutDate":"2026-04-15","status":"active","updatedAt":"2025-10-10T00:00:00Z"}
+{"_id":"t_007","roomId":"r_201","tenant_id":"u_007","checkInDate":"2025-03-10","checkOutDate":"2025-06-01","status":"active","updatedAt":"2025-03-10T00:00:00Z"}
+{"_id":"t_008","roomId":"r_201","tenant_id":"u_008","checkInDate":"2025-06-05","checkOutDate":"2025-10-15","status":"active","updatedAt":"2025-06-05T00:00:00Z"}
+{"_id":"t_009","roomId":"r_201","tenant_id":"u_009","checkInDate":"2025-11-01","checkOutDate":"2026-02-28","status":"active","updatedAt":"2025-11-01T00:00:00Z"}
+{"_id":"t_010","roomId":"r_202","tenant_id":"u_010","checkInDate":"2025-04-01","checkOutDate":"2025-07-01","status":"active","updatedAt":"2025-04-01T00:00:00Z"}
+{"_id":"t_011","roomId":"r_202","tenant_id":"u_011","checkInDate":"2025-06-25","checkOutDate":"2025-12-01","status":"active","updatedAt":"2025-06-25T00:00:00Z"}
+{"_id":"t_012","roomId":"r_202","tenant_id":"u_012","checkInDate":"2026-01-01","checkOutDate":"2026-04-30","status":"active","updatedAt":"2026-01-01T00:00:00Z"}
+{"_id":"t_013","roomId":"r_301","tenant_id":"u_013","checkInDate":"2025-06-10","checkOutDate":"2025-09-01","status":"active","updatedAt":"2025-06-10T00:00:00Z"}
+{"_id":"t_014","roomId":"r_301","tenant_id":"u_014","checkInDate":"2025-09-10","checkOutDate":"2025-11-30","status":"active","updatedAt":"2025-09-10T00:00:00Z"}
+{"_id":"t_015","roomId":"r_302","tenant_id":"u_015","checkInDate":"2025-07-01","checkOutDate":"2025-07-15","status":"cancelled","updatedAt":"2025-07-01T00:00:00Z"}
+{"_id":"t_016","roomId":"r_302","tenant_id":"u_016","checkInDate":"2025-07-05","checkOutDate":"2026-01-31","status":"active","updatedAt":"2025-07-05T00:00:00Z"}

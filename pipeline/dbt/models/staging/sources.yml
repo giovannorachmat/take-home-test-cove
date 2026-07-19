@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: raw
+    database: giografi-sandbox
+    schema: tht_cove_raw
+    tables:
+      - name: properties
+      - name: rooms
+      - name: tenancies

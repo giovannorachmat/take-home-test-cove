@@ -1,0 +1,14 @@
+name: "cove"
+version: "1.0"
+profile: "cove"
+
+model-paths: ["models"]
+
+models:
+  cove:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table

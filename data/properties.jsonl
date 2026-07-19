@@ -1,0 +1,3 @@
+{"_id":"p_001","name":"Cove Lavender","city":"Singapore","lease_start_date":"2025-01-01","lease_end_date":"2026-03-31","updatedAt":"2025-01-01T00:00:00Z"}
+{"_id":"p_002","name":"Cove Bugis","city":"Singapore","lease_start_date":"2025-03-01","lease_end_date":"2026-06-30","updatedAt":"2025-03-01T00:00:00Z","deletedAt":null}
+{"_id":"p_003","name":"Cove Joo Chiat","city":"Singapore","lease_start_date":"2025-06-01","lease_end_date":"2026-12-31","updatedAt":"2025-12-01T00:00:00Z","deletedAt":"2025-12-01 00:00:00"}
