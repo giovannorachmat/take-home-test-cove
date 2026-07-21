@@ -4,10 +4,11 @@
 
 I loaded the raw JSONL into BigQuery with dlt (extract + load) and transformed it
 with dbt (transform). Staging views clean up column names and types, then two mart
-tables land in tht_cove_marts: fd_tenancies (every booking, including cancelled
-ones — `fd_` stands for fact-daily, one row per tenancy) and fm_occupancy_rate
+tables land in tht_cove_marts: `fd_tenancies` (every booking, including cancelled
+ones — `fd_` stands for fact-daily, one row per tenancy), `fm_occupancy_rate`
 (monthly occupancy by property — `fm_` stands for fact-monthly, one row per
-property per month).
+property per month), and `fsum_occupancy_rate` (all-time occupancy by property — `fsum_` stands for fact-summary, one row per
+property since the beginning).
 
 The occupancy logic works at a daily grain: for each room on each calendar date,
 I check whether it's available (within lease, not soft-deleted yet) and whether
