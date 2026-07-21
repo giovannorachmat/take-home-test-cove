@@ -50,21 +50,18 @@ daily_occupancy AS (
 )
 
 SELECT
-    da.property_name,
-    date_trunc(da.date, month) AS month,
-    count(*) AS available_room_days,
-    count(occ.room_id) AS occupied_room_days,
-    round(count(occ.room_id) / count(*), 4) AS occupancy_rate
+    property_name,
+    COUNT(*) AS available_room_days,
+    COUNT(occ.room_id) AS occupied_room_days,
+    ROUND(COUNT(occ.room_id) / COUNT(*), 4) AS occupancy_rate
 FROM
-    daily_availability da
+    daily_availability
 LEFT JOIN
     daily_occupancy occ
-    ON
-        da.date = occ.date
-        AND da.room_id = occ.room_id
+    USING (date, room_id)
 GROUP BY
-    da.property_name, date_trunc(da.date, month)
+    1
 HAVING
-    count(*) > 0
+    COUNT(*) > 0
 ORDER BY
-    da.property_name, month
+    4 DESC, 1

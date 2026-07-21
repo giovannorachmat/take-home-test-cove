@@ -46,20 +46,18 @@ run queries, browse schemas, and explore tables without leaving your seat.
 
 ## What Gets Created
 
-```
-tht_cove_raw.properties       raw JSONL, loaded by dlt
-tht_cove_raw.rooms
-tht_cove_raw.tenancies
-
-tht_cove_staging.stg_properties   cleaned columns + types
-tht_cove_staging.stg_rooms
-tht_cove_staging.stg_tenancies
-tht_cove_staging.dim_date         one row per day, dates from
-                                  the earliest lease to the latest
-
-tht_cove_marts.fd_tenancies       every tenancy, denormalised (fact-daily)
-tht_cove_marts.fm_occupancy_rate  monthly occupancy by property (fact-monthly)
-```
+| Table | Description |
+|---|---|
+| `tht_cove_raw.properties` | raw JSONL, loaded by dlt |
+| `tht_cove_raw.rooms` | raw JSONL, loaded by dlt |
+| `tht_cove_raw.tenancies` | raw JSONL, loaded by dlt |
+| `tht_cove_staging.stg_properties` | cleaned columns + types |
+| `tht_cove_staging.stg_rooms` | cleaned columns + types |
+| `tht_cove_staging.stg_tenancies` | cleaned columns + types |
+| `tht_cove_staging.dim_date` | one row per day, from earliest lease to latest |
+| `tht_cove_marts.fd_tenancies` | every tenancy, denormalised (fact-daily) |
+| `tht_cove_marts.fm_occupancy_rate` | monthly occupancy by property (fact-monthly) |
+| `tht_cove_marts.fsum_occupancy_rate` | all-time occupancy by property (fact-summary) |
 
 ## Data Quality Notes
 
@@ -92,7 +90,7 @@ I found a few things worth flagging:
 
 ```
 data/
-  properties.jsonl, rooms.jsonl, tenancies.jsonl    source data
+  properties.jsonl, rooms.jsonl, tenancies.jsonl     source data
   exploration.sql                                    DuckDB pipeline
   exploration.db                                     DuckDB output
 
@@ -102,9 +100,29 @@ pipeline/
     .dlt/config.toml, secrets.toml                   pipeline config
   dbt/
     models/staging/                                  stg_*.sql, dim_date.sql
-    models/marts/                                    fd_tenancies, fm_occupancy_rate
+    models/marts/                                    fd_tenancies, fm_occupancy_rate, fsum_occupancy_rate
     dbt_project.yml, profiles.yml                    dbt config
 ```
 
 ## Screenshots
 
+### BigQuery Datasets
+![](images/bigquery%20datasets.png)
+
+### Looker Studio
+![](images/datastudio%20dashboard.png)
+
+### Raw Tables
+![](images/raw%20properties.png)
+![](images/raw%20rooms.png)
+![](images/raw%20tenancies.png)
+
+### Staging Views
+![](images/staging%20view%20stg_properties.png)
+![](images/staging%20view%20stg_rooms.png)
+![](images/staging%20view%20stg_tenancies.png)
+
+### Datamart Tables
+![](images/datamart%20fd_tenancies.png)
+![](images/datamart%20fm_occupancy_rate.png)
+![](images/datamart%20fsum_occupancy_rate.png)
