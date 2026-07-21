@@ -23,20 +23,20 @@
 -- RAW DATA LOAD
 -- ============================================================================
 
-select * from read_json("rooms.jsonl");
-select * from read_json("properties.jsonl");
-select * from read_json("tenancies.jsonl");
+SELECT * FROM read_json ("rooms.jsonl");
+SELECT * FROM read_json ("properties.jsonl");
+SELECT * FROM read_json ("tenancies.jsonl");
 
-create or replace table rooms as (
-    select * from read_json("rooms.jsonl")
+CREATE OR REPLACE TABLE rooms AS (
+   SELECT * FROM read_json ("rooms.jsonl")
 );
 
-create or replace table properties as (
-    select * from read_json("properties.jsonl")
+CREATE OR REPLACE TABLE properties AS (
+   SELECT * FROM read_json ("properties.jsonl")
 );
 
-create or replace table tenancies as (
-    select * from read_json("tenancies.jsonl")
+CREATE OR REPLACE TABLE tenancies AS (
+   SELECT * FROM read_json ("tenancies.jsonl")
 );
 
 
@@ -44,53 +44,46 @@ create or replace table tenancies as (
 -- STAGING LAYER
 -- ============================================================================
 
-create schema if not exists tht_cove_staging;
+CREATE SCHEMA IF NOT EXISTS tht_cove_staging;
 
-create or replace table tht_cove_staging.stg_properties as (
-    select
-        _id as id
-        , * exclude (_id,
-        updatedAt,
-        deletedAt,
-        name,
-        city,
-        lease_start_date,
-        lease_end_date)
-        , coalesce (upper (name), 'UNKNOWN') as property_name
-        , coalesce (upper (city), 'UNKNOWN') as property_city
-        , lease_start_date::date as lease_start_date
-        , lease_end_date::date as lease_end_date
-        , updatedAt::date as updated_at
-        , deletedAt::date as deleted_at
-        , case when deletedAt is null then false else true end as is_deleted
-    from
-        properties
+CREATE OR REPLACE TABLE tht_cove_staging.stg_properties AS (
+   SELECT
+       _id AS id,
+       COALESCE (UPPER (name), 'UNKNOWN') AS property_name,
+       COALESCE (UPPER (city), 'UNKNOWN') AS property_city,
+       lease_start_date::DATE AS lease_start_date,
+       lease_end_date::DATE AS lease_end_date,
+       updatedAt::DATE AS updated_at,
+       deletedAt::DATE AS deleted_at,
+       CASE WHEN deletedAt IS NULL THEN FALSE ELSE TRUE END AS is_deleted
+   FROM
+       properties
 );
 
-create or replace table tht_cove_staging.stg_rooms as (
-    select
-        _id as id
-        , propertyid as property_id
-        , coalesce(upper(type), 'UNKNOWN') as room_type
-        , * exclude (_id, propertyId, updatedAt, deletedAt, type)
-        , updatedAt::date as updated_at
-        , deletedAt::date as deleted_at
-        , case when deletedAt is null then false else true end as is_deleted
-    from
-        rooms
+CREATE OR REPLACE TABLE tht_cove_staging.stg_rooms AS (
+   SELECT
+       _id AS id,
+       propertyId AS property_id,
+       room_number,
+       COALESCE (UPPER (type), 'UNKNOWN') AS room_type,
+       updatedAt::DATE AS updated_at,
+       deletedAt::DATE AS deleted_at,
+       CASE WHEN deletedAt IS NULL THEN FALSE ELSE TRUE END AS is_deleted
+   FROM
+       rooms
 );
 
-create or replace table tht_cove_staging.stg_tenancies as (
-    select
-        _id as id
-        , roomid as room_id
-        , checkindate::date as check_in_date
-        , checkoutdate::date as check_out_date
-        , coalesce(upper(status), 'UNKNOWN') as status
-        , * exclude (_id, checkInDate, roomId, checkOutDate, updatedAt, status)
-        , updatedAt::date as updated_at
-    from
-        tenancies
+CREATE OR REPLACE TABLE tht_cove_staging.stg_tenancies AS (
+   SELECT
+       _id AS id,
+       roomId AS room_id,
+       tenant_id,
+       checkInDate::DATE AS check_in_date,
+       checkOutDate::DATE AS check_out_date,
+       COALESCE (UPPER (status), 'UNKNOWN') AS status,
+       updatedAt::DATE AS updated_at
+   FROM
+       tenancies
 );
 
 
@@ -98,211 +91,289 @@ create or replace table tht_cove_staging.stg_tenancies as (
 -- QC: OVERLAPPING TENANCIES DETECTION
 -- ============================================================================
 
-select
-    'OVERLAPPING TENANCIES' as qc_check
-    , a.room_id
-    , a.id as tenancy_a
-    , a.check_in_date as a_check_in
-    , a.check_out_date as a_check_out
-    , b.id as tenancy_b
-    , b.check_in_date as b_check_in
-    , b.check_out_date as b_check_out
-    , datediff(
-        'day', greatest(a.check_in_date, b.check_in_date),
-        least(a.check_out_date, b.check_out_date)
-    ) as overlap_days
-from
-    tht_cove_staging.stg_tenancies a
-inner join
-    tht_cove_staging.stg_tenancies b
-    on
-        a.room_id = b.room_id
-        and a.id < b.id
-        and a.check_in_date < b.check_out_date
-        and b.check_in_date < a.check_out_date
-order by
-    a.room_id, a.check_in_date;
+SELECT
+   'OVERLAPPING TENANCIES' AS qc_check
+   , a.room_id
+   , a.id AS tenancy_a
+   , a.check_in_date AS a_check_in
+   , a.check_out_date AS a_check_out
+   , b.id AS tenancy_b
+   , b.check_in_date AS b_check_in
+   , b.check_out_date AS b_check_out
+   , DATEDIFF (
+       'day', GREATEST (a.check_in_date, b.check_in_date),
+       LEAST (a.check_out_date, b.check_out_date)
+   ) AS overlap_days
+FROM
+   tht_cove_staging.stg_tenancies a
+INNER JOIN
+   tht_cove_staging.stg_tenancies b
+   ON a.room_id = b.room_id
+   AND a.id < b.id
+   AND a.check_in_date < b.check_out_date
+   AND b.check_in_date < a.check_out_date
+ORDER BY
+   a.room_id, a.check_in_date;
 
 
 -- ============================================================================
 -- MARTS
 -- ============================================================================
 
-create schema if not exists tht_cove_marts;
+CREATE SCHEMA IF NOT EXISTS tht_cove_marts;
 
--- Denormalized tenancy view (kept for debugging / reference)
-create or replace table tht_cove_marts.fd_tenancies as (
-    with rooms as (
-        select
-            id as room_id
-            , updated_at as room_updated_at
-            , * exclude (id, updated_at, is_deleted)
-        from
-            tht_cove_staging.stg_rooms
-    )
+CREATE OR REPLACE TABLE tht_cove_marts.fd_tenancies AS (
+   WITH rooms AS (
+       SELECT
+           id AS room_id,
+           updated_at AS room_updated_at,
+           * EXCLUDE (id, updated_at, is_deleted)
+       FROM
+           tht_cove_staging.stg_rooms
+   ),
 
-    , properties as (
-        select
-            id as property_id
-            , updated_at as property_updated_at
-            , property_name
-            , property_city
-            , * exclude (id,
-            property_name,
-            property_city,
-            updated_at,
-            is_deleted)
-        from
-            tht_cove_staging.stg_properties
-    )
+   properties AS (
+       SELECT
+           id AS property_id,
+           updated_at AS property_updated_at,
+           property_name,
+           property_city,
+           *
+               EXCLUDE (
+                   id,
+                   property_name,
+                   property_city,
+                   updated_at,
+                   is_deleted)
+       FROM
+           tht_cove_staging.stg_properties
+   ),
 
-    , rooms_properties as (
-        select
-            room_id
-            , room_updated_at
-            , room_number
-            , room_type
-            , property_id
-            , property_name
-            , property_city
-            , property_updated_at
-            , lease_start_date
-            , lease_end_date
-        from
-            rooms
-        left join
-            properties
-            using (property_id)
-    )
+   rooms_properties AS (
+       SELECT
+           room_id,
+           room_updated_at,
+           room_number,
+           room_type,
+           property_id,
+           property_name,
+           property_city,
+           property_updated_at,
+           lease_start_date,
+           lease_end_date
+       FROM
+           rooms
+       LEFT JOIN
+           properties
+           USING (property_id)
+   ),
 
-    , tenancies as (
-        select
-            *
-        from
-            tht_cove_staging.stg_tenancies
-    )
+   tenancies AS (
+       SELECT
+           *
+       FROM
+           tht_cove_staging.stg_tenancies
+   ),
 
-    , parsed_all as (
-        select
-            *
-        from
-            tenancies
-        left join
-            rooms_properties
-            using (room_id)
-    )
+   parsed_all AS (
+       SELECT
+           *
+       FROM
+           tenancies
+       LEFT JOIN
+           rooms_properties
+           USING (room_id)
+   )
 
-    select
-        id
-        , tenant_id
-        , check_in_date
-        , check_out_date
-        , status
-        , updated_at
-        , room_id
-        , room_updated_at
-        , coalesce(property_name, 'UNKNOWN') as property_name
-        , coalesce(property_city, 'UNKNOWN') as property_city
-    from parsed_all
-    order by updated_at, id
+   SELECT
+       id,
+       tenant_id,
+       check_in_date,
+       check_out_date,
+       status,
+       updated_at,
+       room_id,
+       room_updated_at,
+       COALESCE (property_name, 'UNKNOWN') AS property_name,
+       COALESCE (property_city, 'UNKNOWN') AS property_city
+   FROM parsed_all
+   ORDER BY updated_at, id
 );
 
--- Monthly occupancy rate by property
-create or replace table tht_cove_marts.fm_occupancy_rate as (
-    with
-    property_boundaries as (
-        select
-            min(lease_start_date) as min_date
-            , max(lease_end_date) as max_date
-        from
-            tht_cove_staging.stg_properties
-        where
-            is_deleted is false
-    )
+CREATE OR REPLACE TABLE tht_cove_marts.fm_occupancy_rate AS (
+   WITH
+   property_boundaries AS (
+       SELECT
+           MIN (lease_start_date) AS min_date,
+           MAX (lease_end_date) AS max_date
+       FROM
+           tht_cove_staging.stg_properties
+       WHERE
+           is_deleted IS FALSE
+   ),
 
-    , daily_spine as (
-        select
-            unnest(generate_series(
-                (select min_date from property_boundaries),
-                (select max_date from property_boundaries),
-                interval 1 day
-            )) as date
-    )
+   daily_spine AS (
+       SELECT
+           UNNEST (GENERATE_SERIES (
+               (SELECT min_date FROM property_boundaries),
+               (SELECT max_date FROM property_boundaries),
+               INTERVAL 1 DAY
+           )) AS date
+   ),
 
-    , active_rooms as (
-        select
-            r.id as room_id
-            , r.room_number
-            , r.room_type
-            , r.property_id
-            , p.property_name
-            , p.property_city
-            , r.deleted_at as room_deleted_at
-            , p.deleted_at as property_deleted_at
-            , p.lease_start_date
-            , p.lease_end_date
-        from
-            tht_cove_staging.stg_rooms r
-        inner join
-            tht_cove_staging.stg_properties p
-            on r.property_id = p.id
-    )
+   active_rooms AS (
+       SELECT
+           r.id AS room_id,
+           r.room_number,
+           r.room_type,
+           r.property_id,
+           p.property_name,
+           p.property_city,
+           r.deleted_at AS room_deleted_at,
+           p.deleted_at AS property_deleted_at,
+           p.lease_start_date,
+           p.lease_end_date
+       FROM
+           tht_cove_staging.stg_rooms r
+       LEFT JOIN
+           tht_cove_staging.stg_properties p
+           ON r.property_id = p.id
+   ),
 
-    , daily_availability as (
-        select
-            ds.date
-            , ar.room_id
-            , ar.property_id
-            , ar.property_name
-        from
-            daily_spine ds
-        cross join
-            active_rooms ar
-        where
-            ds.date >= ar.lease_start_date
-            and ds.date <= ar.lease_end_date
-            and (ar.room_deleted_at is null or ds.date < ar.room_deleted_at)
-            and (
-                ar.property_deleted_at is null
-                or ds.date < ar.property_deleted_at
-            )
-    )
+   daily_availability AS (
+       SELECT
+           ds.date,
+           ar.room_id,
+           ar.property_id,
+           ar.property_name
+       FROM
+           daily_spine ds,
+           active_rooms ar
+       WHERE
+           TRUE
+           AND ar.room_id IS NOT NULL
+           AND ds.date BETWEEN ar.lease_start_date AND ar.lease_end_date
+           AND (ar.room_deleted_at IS NULL OR ds.date < ar.room_deleted_at)
+           AND (ar.property_deleted_at IS NULL OR ds.date < ar.property_deleted_at)
+   ),
 
-    , daily_occupancy as (
-        select distinct
-            ds.date
-            , t.room_id
-        from
-            (select date from daily_spine) ds
-        inner join
-            tht_cove_staging.stg_tenancies t
-            on
-                t.check_in_date <= ds.date
-                and ds.date < t.check_out_date
-        where
-            t.status != 'CANCELLED'
-    )
+   daily_occupancy AS (
+       SELECT DISTINCT
+           ds.date, t.room_id
+       FROM
+           daily_spine ds,
+           tht_cove_staging.stg_tenancies t
+       WHERE
+           TRUE
+           AND t.room_id IS NOT NULL
+           AND ds.date BETWEEN t.check_in_date AND t.check_out_date - INTERVAL 1 DAY
+           AND t.status != 'CANCELLED'
+   )
 
-    select
-        da.property_name
-        , date_trunc('month', da.date) as month
-        , count(*) as available_room_days
-        , count(occ.room_id) as occupied_room_days
-        , round(count(occ.room_id)::double / count(*)::double, 4)
-            as occupancy_rate
-    from
-        daily_availability da
-    left join
-        daily_occupancy occ
-        on
-            da.date = occ.date
-            and da.room_id = occ.room_id
-    group by
-        da.property_name
-        , date_trunc('month', da.date)
-    having
-        count(*) > 0
-    order by
-        da.property_name
-        , month
+   SELECT
+       da.property_name,
+       DATE_TRUNC ('month', da.date) AS month,
+       COUNT (*) AS available_room_days,
+       COUNT (occ.room_id) AS occupied_room_days,
+       ROUND (COUNT (occ.room_id)::DOUBLE / COUNT (*)::DOUBLE, 4) AS occupancy_rate
+   FROM
+       daily_availability da
+   LEFT JOIN
+       daily_occupancy occ
+       ON da.date = occ.date
+       AND da.room_id = occ.room_id
+   GROUP BY
+       da.property_name, DATE_TRUNC ('month', da.date)
+   HAVING
+       COUNT (*) > 0
+   ORDER BY
+       da.property_name, month
+);
+
+CREATE OR REPLACE TABLE tht_cove_marts.fsum_occupancy_rate AS (
+   WITH
+   property_boundaries AS (
+       SELECT
+           MIN (lease_start_date) AS min_date,
+           MAX (lease_end_date) AS max_date
+       FROM
+           tht_cove_staging.stg_properties
+       WHERE
+           is_deleted IS FALSE
+   ),
+
+   daily_spine AS (
+       SELECT
+           UNNEST (GENERATE_SERIES (
+               (SELECT min_date FROM property_boundaries),
+               (SELECT max_date FROM property_boundaries),
+               INTERVAL 1 DAY
+           )) AS date
+   ),
+
+   active_rooms AS (
+       SELECT
+           r.id AS room_id,
+           r.room_number,
+           r.room_type,
+           r.property_id,
+           p.property_name,
+           p.property_city,
+           r.deleted_at AS room_deleted_at,
+           p.deleted_at AS property_deleted_at,
+           p.lease_start_date,
+           p.lease_end_date
+       FROM
+           tht_cove_staging.stg_rooms r
+       LEFT JOIN
+           tht_cove_staging.stg_properties p
+           ON r.property_id = p.id
+   ),
+
+   daily_availability AS (
+       SELECT
+           ds.date,
+           ar.room_id,
+           ar.property_id,
+           ar.property_name
+       FROM
+           daily_spine ds,
+           active_rooms ar
+       WHERE
+           TRUE
+           AND ar.room_id IS NOT NULL
+           AND ds.date BETWEEN ar.lease_start_date AND ar.lease_end_date
+           AND (ar.room_deleted_at IS NULL OR ds.date < ar.room_deleted_at)
+           AND (ar.property_deleted_at IS NULL OR ds.date < ar.property_deleted_at)
+   ),
+
+   daily_occupancy AS (
+       SELECT DISTINCT
+           ds.date, t.room_id
+       FROM
+           daily_spine ds,
+           tht_cove_staging.stg_tenancies t
+       WHERE
+           TRUE
+           AND t.room_id IS NOT NULL
+           AND ds.date BETWEEN t.check_in_date AND t.check_out_date - INTERVAL 1 DAY
+           AND t.status != 'CANCELLED'
+   )
+
+   SELECT
+       property_name,
+       COUNT (*) AS available_room_days,
+       COUNT (occ.room_id) AS occupied_room_days,
+       ROUND (COUNT (occ.room_id)::DOUBLE / COUNT (*)::DOUBLE, 4) AS occupancy_rate
+   FROM
+       daily_availability
+   LEFT JOIN
+       daily_occupancy occ
+       USING (date, room_id)
+   GROUP BY
+       1
+   HAVING
+       COUNT (*) > 0
+   ORDER BY
+       4 DESC, 1
 );
