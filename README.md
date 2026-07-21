@@ -106,12 +106,11 @@ pipeline/
 ```
 
 ## Screenshots
+### [Looker Studio](https://datastudio.google.com/reporting/9e5612fd-08e6-42f4-a443-bb4ba18ce746)
+![](images/datastudio%20dashboard.png)
 
 ### BigQuery Datasets
 ![](images/bigquery%20datasets.png)
-
-### Looker Studio
-![](images/datastudio%20dashboard.png)
 
 ### Raw Tables
 ![](images/raw%20properties.png)
